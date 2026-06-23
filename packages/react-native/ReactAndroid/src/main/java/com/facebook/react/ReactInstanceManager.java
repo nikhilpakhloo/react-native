@@ -76,6 +76,7 @@ import com.facebook.react.fabric.FabricUIManager;
 import com.facebook.react.interfaces.TaskInterface;
 import com.facebook.react.internal.AndroidChoreographerProvider;
 import com.facebook.react.internal.ChoreographerProvider;
+import com.facebook.react.internal.featureflags.ReactNativeFeatureFlags;
 import com.facebook.react.modules.appearance.AppearanceModule;
 import com.facebook.react.modules.core.DefaultHardwareBackBtnHandler;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
@@ -861,24 +862,26 @@ public class ReactInstanceManager {
 
     ReactContext currentReactContext = getCurrentReactContext();
     if (currentReactContext != null) {
-      boolean didDisplayMetricsChange =
-          DisplayMetricsHolder.updateDisplayMetricsIfChanged(updatedContext);
-      if (didDisplayMetricsChange) {
-        @Nullable UIManager uiManager = UIManagerHelper.getUIManager(currentReactContext, FABRIC);
-        if (uiManager instanceof FabricUIManager) {
-          ((FabricUIManager) uiManager).updateDisplayMetricDensity();
-        }
-
-        synchronized (mAttachedReactRoots) {
-          for (ReactRoot reactRoot : mAttachedReactRoots) {
-            reactRoot.getRootViewGroup().requestLayout();
+      if (ReactNativeFeatureFlags.enableFontScaleChangesUpdatingLayout()) {
+        boolean didDisplayMetricsChange =
+            DisplayMetricsHolder.updateDisplayMetricsIfChanged(updatedContext);
+        if (didDisplayMetricsChange) {
+          @Nullable UIManager uiManager = UIManagerHelper.getUIManager(currentReactContext, FABRIC);
+          if (uiManager instanceof FabricUIManager) {
+            ((FabricUIManager) uiManager).updateDisplayMetricDensity();
           }
-        }
 
-        DeviceInfoModule deviceInfoModule =
-            currentReactContext.getNativeModule(DeviceInfoModule.class);
-        if (deviceInfoModule != null) {
-          deviceInfoModule.emitUpdateDimensionsEvent();
+          synchronized (mAttachedReactRoots) {
+            for (ReactRoot reactRoot : mAttachedReactRoots) {
+              reactRoot.getRootViewGroup().requestLayout();
+            }
+          }
+
+          DeviceInfoModule deviceInfoModule =
+              currentReactContext.getNativeModule(DeviceInfoModule.class);
+          if (deviceInfoModule != null) {
+            deviceInfoModule.emitUpdateDimensionsEvent();
+          }
         }
       }
 

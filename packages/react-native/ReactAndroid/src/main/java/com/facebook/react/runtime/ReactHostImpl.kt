@@ -736,14 +736,16 @@ public class ReactHostImpl(
   override fun onConfigurationChanged(context: Context) {
     val currentReactContext = this.currentReactContext
     if (currentReactContext != null) {
-      val didDisplayMetricsChange = DisplayMetricsHolder.updateDisplayMetricsIfChanged(context)
-      if (didDisplayMetricsChange) {
-        synchronized(attachedSurfaces) {
-          attachedSurfaces.forEach { surface -> surface.view?.requestLayout() }
-        }
+      if (ReactNativeFeatureFlags.enableFontScaleChangesUpdatingLayout()) {
+        val didDisplayMetricsChange = DisplayMetricsHolder.updateDisplayMetricsIfChanged(context)
+        if (didDisplayMetricsChange) {
+          synchronized(attachedSurfaces) {
+            attachedSurfaces.forEach { surface -> surface.view?.requestLayout() }
+          }
 
-        val deviceInfoModule = currentReactContext.getNativeModule(DeviceInfoModule::class.java)
-        deviceInfoModule?.emitUpdateDimensionsEvent()
+          val deviceInfoModule = currentReactContext.getNativeModule(DeviceInfoModule::class.java)
+          deviceInfoModule?.emitUpdateDimensionsEvent()
+        }
       }
 
       val appearanceModule = currentReactContext.getNativeModule(AppearanceModule::class.java)
