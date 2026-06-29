@@ -124,6 +124,8 @@ internal object ColorStopUtils {
                 )
           }
           lastDefinedIndex = i
+        }else if(endPosition !== null){
+          lastDefinedIndex = i
         }
       }
     }
